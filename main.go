@@ -1,18 +1,22 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"net/http"
+	"evt-be-go/configs"
+	"evt-be-go/routes"
 
-	"evt-be-go/router"
+	"github.com/labstack/echo/v4"
 )
 
 func main() {
-	r := router.Router()
-	// fs := http.FileServer(http.Dir("build"))
-	// http.Handle("/", fs)
-	fmt.Println("Starting server on the port 8080...")
+	e := echo.New()
 
-	log.Fatal(http.ListenAndServe(":8080", r))
+	//run database
+	configs.ConnectDB()
+
+	//routes
+	routes.EventRoutes(e)
+
+	e.Logger.Fatal(e.Start(":8080"))
 }
+
+// Reference: https://dev.to/hackmamba/build-a-rest-api-with-golang-and-mongodb-echo-version-2gdg
