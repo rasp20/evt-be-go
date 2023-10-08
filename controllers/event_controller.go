@@ -59,7 +59,7 @@ func CreateEvent(c echo.Context) error {
 	return c.JSON(http.StatusCreated, responses.EventResponse{Status: http.StatusCreated, Message: "success", Data: &echo.Map{"data": result}})
 }
 
-func GetAEvent(c echo.Context) error {
+func GetAnEvent(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	eventId := c.Param("eventId")
 	var event models.Event
@@ -76,7 +76,7 @@ func GetAEvent(c echo.Context) error {
 	return c.JSON(http.StatusOK, responses.EventResponse{Status: http.StatusOK, Message: "success", Data: &echo.Map{"data": event}})
 }
 
-func EditAEvent(c echo.Context) error {
+func EditAnEvent(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	eventId := c.Param("eventId")
 	var event models.Event
@@ -94,7 +94,7 @@ func EditAEvent(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, responses.EventResponse{Status: http.StatusBadRequest, Message: "error", Data: &echo.Map{"data": validationErr.Error()}})
 	}
 
-	update := bson.M{"title": event.Title, "start_date": event.Start_Date, "end_date": event.End_Date, "place": event.Place, "city": event.City, "province": event.Province, "country": event.Country, "image_url": event.Image_Url, "description": event.Description, "url_page": event.Url_Page, "is_free": event.Is_Free, "promo_code": event.Promo_Code, "organizer": event.Organizer, "is_featured": event.Is_Featured}
+	update := bson.M{"Title": event.Title, "Start_Date": event.Start_Date, "End_Date": event.End_Date, "Place": event.Place, "City": event.City, "Province": event.Province, "Country": event.Country, "Image_Url": event.Image_Url, "Description": event.Description, "Url_Page": event.Url_Page, "Is_Free": event.Is_Free, "Promo_Code": event.Promo_Code, "Organizer": event.Organizer, "Is_Featured": event.Is_Featured}
 
 	result, err := eventCollection.UpdateOne(ctx, bson.M{"id": objId}, bson.M{"$set": update})
 
@@ -115,7 +115,7 @@ func EditAEvent(c echo.Context) error {
 	return c.JSON(http.StatusOK, responses.EventResponse{Status: http.StatusOK, Message: "success", Data: &echo.Map{"data": updatedEvent}})
 }
 
-func DeleteAEvent(c echo.Context) error {
+func DeleteAnEvent(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	eventId := c.Param("eventId")
 	defer cancel()

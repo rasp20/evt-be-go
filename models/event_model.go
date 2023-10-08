@@ -3,19 +3,19 @@ package models
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type Event struct {
-	Id          primitive.ObjectID `json:"id,omitempty"`
-	Title       string             `json:"title,omitempty"`
-	Start_Date  primitive.DateTime `json:"start_date,omitempty"`
-	End_Date    primitive.DateTime `json:"end_date,omitempty"`
-	Place       string             `json:"place,omitempty"`
-	City        string             `json:"city,omitempty"`
-	Province    string             `json:"province,omitempty"`
-	Country     string             `json:"country,omitempty"`
-	Image_Url   string             `json:"image_url,omitempty"`
-	Description string             `json:"description,omitempty"`
-	Url_Page    string             `json:"url_page,omitempty"`
-	Is_Free     bool               `json:"is_free,omitempty"`
-	Promo_Code  string             `json:"promo_code,omitempty"`
-	Organizer   string             `json:"organizer,omitempty"`
-	Is_Featured bool               `json:"is_featured,omitempty"`
+	Id          primitive.ObjectID `json:"_id"`
+	Title       string             `json:"Title" validate:"required"`
+	Start_Date  primitive.DateTime `json:"Start_Date"`
+	End_Date    primitive.DateTime `json:"End_Date"`
+	Place       string             `json:"Place"`
+	City        string             `json:"City"`
+	Province    string             `json:"Province"`
+	Country     string             `json:"Country"`
+	Image_Url   string             `json:"Image_Url"`
+	Description string             `json:"Description"`
+	Url_Page    string             `json:"Url_Page"`
+	Is_Free     bool               `json:"Is_Free"`
+	Promo_Code  string             `json:"Promo_Code"`
+	Organizer   string             `json:"Organizer"`
+	Is_Featured bool               `json:"Is_Featured"`
 }
