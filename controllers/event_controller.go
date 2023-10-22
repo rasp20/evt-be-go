@@ -4,12 +4,13 @@ import (
 	"evt-be-go/configs"
 	"evt-be-go/models"
 	"evt-be-go/responses"
-	"log"
 	"net/http"
 	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
+
+	// "github.com/labstack/gommon/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -58,7 +59,7 @@ func CreateEvent(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, responses.EventResponse{Status: http.StatusInternalServerError, Message: "error", Data: &echo.Map{"data": err.Error()}})
 	}
 
-	return c.JSON(http.StatusCreated, responses.EventResponse{Status: http.StatusCreated, Message: "success", Data: &echo.Map{"data": result}})
+	return c.JSON(http.StatusCreated, responses.EventResponse{Status: http.StatusCreated, Message: "Event created successfully", Data: &echo.Map{"data": result}})
 }
 
 func GetAnEvent(c echo.Context) error {
@@ -139,33 +140,35 @@ func DeleteAnEvent(c echo.Context) error {
 
 func GetAllEvent(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	var events []models.Event
 	defer cancel()
 
-	// Extract the query parameters from the request
-	titleQuery := c.QueryParam("title")
-	placeQuery := c.QueryParam("place")
-	cityQuery := c.QueryParam("city")
-	provinceQuery := c.QueryParam("province")
+	// Get search parameters from query parameters
+	eventName := c.QueryParam("name")
+	place := c.QueryParam("place")
+	city := c.QueryParam("city")
 
-	// Define a filter to match events with the specified criteria using OR logic
-	filter := bson.M{
-		"$or": []bson.M{
-			{"Title": primitive.Regex{Pattern: titleQuery, Options: "i"}},       // Title query
-			{"Place": primitive.Regex{Pattern: placeQuery, Options: "i"}},       // Place query
-			{"City": primitive.Regex{Pattern: cityQuery, Options: "i"}},         // City query
-			{"Province": primitive.Regex{Pattern: provinceQuery, Options: "i"}}, // Province query
-		},
+	// Define the filter based on the search parameters
+	filter := bson.M{}
+
+	// Create an array to hold the OR conditions
+	orConditions := []bson.M{}
+
+	if eventName != "" {
+		// Add Title filter condition to the OR array
+		orConditions = append(orConditions, bson.M{"Title": bson.M{"$regex": eventName, "$options": "i"}})
+	}
+	if place != "" {
+		// Add Place filter condition to the OR array
+		orConditions = append(orConditions, bson.M{"Place": bson.M{"$regex": place, "$options": "i"}})
+	}
+	if city != "" {
+		// Add City filter condition to the OR array
+		orConditions = append(orConditions, bson.M{"City": bson.M{"$regex": city, "$options": "i"}})
 	}
 
-	// Log the filter for debugging purposes
-	log.Printf("Filter: %v\n", filter)
-
-	// Remove empty fields from the filter to avoid matching all events
-	for key, value := range filter {
-		if value == "" {
-			delete(filter, key)
-		}
+	// Use the $or operator to combine the OR conditions
+	if len(orConditions) > 0 {
+		filter["$or"] = orConditions
 	}
 
 	// Define a sort filter to order the events by ascending Is_Featured and Start_Date
@@ -179,30 +182,51 @@ func GetAllEvent(c echo.Context) error {
 	results, err := eventCollection.Find(ctx, filter, findOptions)
 
 	if err != nil {
+		// Handle the error
 		return c.JSON(http.StatusInternalServerError, responses.EventResponse{
 			Status:  http.StatusInternalServerError,
 			Message: "error",
-			Data:    &echo.Map{"data": err.Error()},
+			Data:    &echo.Map{"data": nil},
 		})
 	}
 
-	// Reading from the database in an optimal way
 	defer results.Close(ctx)
+
+	// Create a slice to store the retrieved event data
+	data := &echo.Map{"data": []models.Event{}}
+
 	for results.Next(ctx) {
 		var singleEvent models.Event
 		if err = results.Decode(&singleEvent); err != nil {
+			// Handle the error
 			return c.JSON(http.StatusInternalServerError, responses.EventResponse{
 				Status:  http.StatusInternalServerError,
 				Message: "error",
-				Data:    &echo.Map{"data": err.Error()},
+				Data:    &echo.Map{"data": nil},
 			})
 		}
-		events = append(events, singleEvent)
+		// Cast and dereference data for indexing
+		eventData := (*data)["data"].([]models.Event)
+
+		// Append the event to the eventData slice
+		eventData = append(eventData, singleEvent)
+
+		// Update the data map with the modified eventData
+		(*data)["data"] = eventData
+	}
+
+	// Check if any events were found
+	if len((*data)["data"].([]models.Event)) == 0 {
+		return c.JSON(http.StatusNotFound, responses.EventResponse{
+			Status:  http.StatusNotFound,
+			Message: "no events found",
+			Data:    data,
+		})
 	}
 
 	return c.JSON(http.StatusOK, responses.EventResponse{
 		Status:  http.StatusOK,
-		Message: "success",
-		Data:    &echo.Map{"data": events},
+		Message: "Events retrieved successfully",
+		Data:    data,
 	})
 }
